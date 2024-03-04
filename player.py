@@ -1,9 +1,12 @@
 import pygame
 from pygame.math import Vector2
 import math
+import random
+
 from math import atan2
 from pygame import Rect
 from bullet import Homing
+
 
 class Player:
 	''':)'''
@@ -27,6 +30,10 @@ class Player:
 		self.centerpos = Vector2(400,400)
 
 		self.newMousePos = Vector2(0,0)
+		self.aimAt = Vector2(0,0)
+
+		self.accuracy = 42
+		self.accBonus = 0
 		#self.oldMousePos = Vector2(0,0)
 		#self.correctionangle = 90
 		#self.mouseVels: list[Vector2] = []
@@ -82,21 +89,30 @@ class Player:
 		if keys[pygame.K_SPACE]:
 			self.shoot()
 
+	def aim(self):
+		self.aimAt.x = self.newMousePos.x + random.randint(
+			-self.accuracy + self.accBonus,
+			self.accuracy - self.accBonus)
+		self.aimAt.y = self.newMousePos.y + random.randint(
+			-self.accuracy + self.accBonus,
+			self.accuracy - self.accBonus)
 
 	def move(self):
 		'''Applies velocity to position'''
 		self.centerpos+=self.vel*self.delta
 	
 	def shoot(self):
-		if len(self.magicMissile)<3 and self.cooldown == 0:
-			self.magicMissile.append(Homing(self.centerpos,90))
+		if len(self.magicMissile)<24 and self.cooldown == 0:
+			self.magicMissile.append(Homing(self.centerpos, 500, random.randint(3,9)))
+			#self.magicMissile[len(self.magicMissile)-1].fire(self.newMousePos)
 			self.cooldown+=0.0000000001
 
 	def bullets(self):
 		for i in range(len(self.magicMissile)):
 			if i >= len(self.magicMissile):
 				break
-			self.magicMissile[i].target(self.newMousePos, self.delta)
+			self.aim()
+			self.magicMissile[i].target(self.aimAt, self.delta)
 			if (
 			self.magicMissile[i].update(self.screen,self.delta)
 			):
@@ -111,10 +127,11 @@ class Player:
 		self.move()
 		self.mouseMove()
 		self.rotate()
-		self.draw()
+
 		self.bullets()
+		self.draw()
 
 		if self.cooldown != 0:
 			self.cooldown+=1*delta
-		if self.cooldown > 0.66:
+		if self.cooldown > 0.16:
 			self.cooldown = 0
